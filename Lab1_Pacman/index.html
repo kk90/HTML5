@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+</head>
+<body>
+	<canvas width="800" height="600" id="canvasElementId">
+		Your browser does not support canvas element
+	</canvas>
+	<script>
+	(function(){
+		"use strict"
+		var FRAME_THICKNESS = 25;
+		var FRAME_WIDTH = 800;
+		var FRAME_HEIGHT = 600;
+		var FRAME_MOVE = FRAME_THICKNESS / 2;
+
+		document.onkeydown = checkKey;
+
+		var canvas = document.getElementById('canvasElementId');
+		var context = canvas.getContext('2d');
+
+		canvas.width = FRAME_WIDTH + FRAME_THICKNESS;
+		canvas.height = FRAME_HEIGHT + FRAME_THICKNESS;
+
+		var direction = {
+			left: true,
+			right: false
+		}
+
+		var state = {
+			open: true,
+			close: false
+		}
+
+		var pacmanState = state.open;
+		var pacmanDirection = direction.right;
+		var pacmanRadius = 50;
+
+		var secunds = 1; // [s]
+		var milisecunds = 1000 // [ms]
+		var interval = 1000; // [ms] dodaj 75px co 1 sekunde (1000 ms) 
+
+		var step_pxpermilis = 75/milisecunds // [px/ms]
+
+		var pacmanXPosition = 400;
+		var pacmanYPosition = 300;
+
+		var lastDrawTime;
+		var lastChangeMouthStateTime;
+
+		requestAnimationFrame(drawLoop);
+		
+		function drawLoop(time) {
+
+		    if (!lastDrawTime) {
+	        	lastDrawTime = time;
+	        }
+
+	        if (!lastChangeMouthStateTime) {
+             	lastChangeMouthStateTime = time;
+            }
+
+    		var timeDiff = time - lastDrawTime;
+    		
+        	if (time - lastChangeMouthStateTime > interval) {
+            	tooglePacmanState();
+            	lastChangeMouthStateTime = time;
+        	}
+
+        	var move = step_pxpermilis * timeDiff;
+
+		    drawPacman(move);
+
+		    lastDrawTime = time;
+
+		    requestAnimationFrame(drawLoop);
+		}
+
+		function tooglePacmanState() {
+	      	pacmanState = !pacmanState;
+		}
+
+		function drawPacman(step) {
+
+			clearFrame(context);
+		   	drawFrame(context);
+
+		   	if(pacmanState == state.open) {
+		        if(pacmanDirection == direction.left) {
+		        	drawPacmanOpen(context, pacmanXPosition, pacmanYPosition, direction.left);
+		        }
+		        if(pacmanDirection == direction.right) {
+		        	drawPacmanOpen(context, pacmanXPosition, pacmanYPosition, direction.right);
+		        }
+		   	}
+
+		   	if(pacmanState == state.close) {
+		    	if(pacmanDirection == direction.left) {
+		        	drawPacmanClose(context, pacmanXPosition, pacmanYPosition, direction.left);
+		        }
+		        if(pacmanDirection == direction.right) {
+		        	drawPacmanClose(context, pacmanXPosition, pacmanYPosition, direction.right);
+		        }
+		   	}
+
+		    if(pacmanXPosition >= FRAME_WIDTH - pacmanRadius) {
+		    	pacmanDirection = direction.left;
+		   }
+
+		   if(pacmanXPosition <= FRAME_THICKNESS + pacmanRadius) {
+		   		pacmanDirection = direction.right;
+		   }
+
+		   if(pacmanDirection == direction.right) {
+		   		pacmanXPosition += step;
+		   }
+
+		   if(pacmanDirection == direction.left) {
+		   		pacmanXPosition -= step;
+		   }
+		}
+
+		function clearFrame(context) {
+			context.clearRect(FRAME_MOVE, FRAME_MOVE, FRAME_WIDTH, FRAME_HEIGHT);
+		}
+
+		function drawFrame(context) {
+			 context.save();
+			 context.beginPath();
+		     context.rect(FRAME_MOVE, FRAME_MOVE, FRAME_WIDTH, FRAME_HEIGHT);
+		     context.lineWidth = FRAME_THICKNESS;
+		     context.strokeStyle = 'red';
+		     context.stroke();
+		     context.restore();
+		}
+
+		function drawPacmanOpen (context, xposition, yposition, direction) {
+			context.save();
+			context.beginPath();
+			context.arc(xposition, yposition, pacmanRadius, 0.25 * Math.PI, 1.25 * Math.PI, direction);
+			context.fillStyle = "yellow";
+
+			context.fill();
+			context.beginPath();
+			context.arc(xposition, yposition, pacmanRadius, 0.75 * Math.PI, 1.75 * Math.PI, direction);
+			context.fill();
+
+			drawPacmanEye(xposition, yposition, direction)
+			context.restore();
+		}
+
+		function drawPacmanClose (context, xposition, yposition, direction) {
+			context.save();
+			context.beginPath();
+			context.arc(xposition, yposition, pacmanRadius, 0 * Math.PI, 2 * Math.PI, direction);
+			context.fillStyle = "yellow";
+			context.fill();
+			drawPacmanEye(xposition, yposition, direction);
+			context.beginPath();
+      		context.moveTo(xposition, yposition);
+      		if(direction) {
+      			context.lineTo(xposition - pacmanRadius, yposition);
+      		}else{
+      			context.lineTo(xposition + pacmanRadius, yposition);
+      		}
+      		context.stroke();
+			context.restore();
+		}
+
+		function drawPacmanEye(xposition, yposition, direction) {
+			context.save();
+			context.beginPath();
+			context.arc(xposition, yposition - 3/5 * pacmanRadius, 5, 0, 2 * Math.PI, direction);
+			context.fillStyle = "black";
+			context.fill();
+			context.restore();
+		}
+
+		function checkKey(e) {
+		    e = e || window.event;
+		    if (e.keyCode == '38') {
+		    	if(pacmanYPosition >= FRAME_THICKNESS + pacmanRadius) {
+		    		var position = pacmanYPosition - 10;
+		    		if(position < FRAME_THICKNESS + pacmanRadius) {
+		   				position = FRAME_THICKNESS + pacmanRadius
+		   			}
+		   			pacmanYPosition = position;
+		    	}
+		    }
+		    else if (e.keyCode == '40') {
+		    	if(pacmanYPosition <= FRAME_HEIGHT - pacmanRadius) {
+		    		var position = pacmanYPosition + 10;
+		    		if(position > FRAME_HEIGHT - pacmanRadius) {
+		   				position = FRAME_HEIGHT - pacmanRadius
+		   			}
+		   			pacmanYPosition = position;
+		    	}
+		    } else if (e.keyCode == '39') {
+		    	pacmanDirection = direction.right;
+		    } else if (e.keyCode == '37') {
+		    	pacmanDirection = direction.left;
+		    }
+		}
+	}());
+	</script>
+</body>
+</html>

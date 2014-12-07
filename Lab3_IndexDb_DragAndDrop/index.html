@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Lab 3</title>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css">
+</head>
+<body>
+	<div style="margin-top:20px;margin-left:20px">
+		<div class="row">
+	  		<div class="col-md-6">
+	  				<canvas width="600" height="400" id="canvasElementId" style="border-style: solid;border-width: 5px;">
+						Your browser does not support canvas element
+					</canvas>
+					<input type="checkbox" id="filtrSolorizeId"> Solarize
+	  				<input type="checkbox" id="filtrNegativeId"> Nagative
+	  		</div>
+
+	  		<div class="col-md-6">
+	  			<p>Txt files:</p>
+	  			<ul id="documentHistoryId">
+				</ul>
+	  		</div>
+		</div>
+	<div>
+
+	<script>
+	(function() {
+		"use strict"
+
+		var fileText = "";
+
+		var canvas = document.getElementById('canvasElementId');
+
+        canvas.addEventListener("dragenter", onDragEnter, false);
+        canvas.addEventListener("dragover", onDragOver, false);
+        canvas.addEventListener("drop", onDropFiles, false);
+
+		var context = canvas.getContext('2d');
+
+  		function makeSolarize(level) {
+	    	var idata = context.getImageData(0, 0, canvas.width, canvas.height);
+	    	var data = idata.data;
+    	    for (var i = 0; i <= data.length - 4; i += 4) {
+		        data[i] + level <= 255 ? data[i] = data[i] + level : data[i] = 255;
+		        data[i + 1] + level <= 255 ? data[i + 1] = data[i + 1] + level : data[i + 1] = 255;
+		        data[i + 2] + level <= 255 ? data[i + 2] = data[i + 2] + level : data[i + 2] = 255;
+			}
+	    	context.putImageData(idata, 0, 0);
+		}
+
+		function makeNagative() {
+	    	var idata = context.getImageData(0, 0, canvas.width, canvas.height);
+	    	var data = idata.data;
+	    	for (var i = 0; i <= data.length - 4; i += 4) {
+	        		
+	        		data[i] = 255 - data[i]
+	        		data[i + 1] = 255 - data[i + 1];
+	        		data[i + 2] = 255 - data[i + 2];
+	   		}
+	    	context.putImageData(idata, 0, 0);
+		}
+
+		function onDropFiles(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            var files = e.dataTransfer.files;
+
+            for (var i = 0; i < files.length; i++) {
+                processDroppedFile(files[i]);
+            }
+        };
+
+        function onDragEnter(e) {
+            e.stopPropagation();
+            e.preventDefault();
+        };
+
+        function onDragOver(e) {
+            e.stopPropagation();
+            e.preventDefault();
+        };
+
+        function processDroppedFile(file) {
+
+        	var imageReader = new FileReader();
+            var textReader = new FileReader();
+
+            imageReader.onload = function (e) {
+                var canvas = document.getElementById("canvasElementId");
+                var context = canvas.getContext("2d");
+                var image = new Image();
+
+                image.onload = function () {
+                    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+                    var ul = document.getElements
+                };
+
+                image.src = e.target.result;
+            };
+ 			
+ 			textReader.onload = function (e) {
+                var text = e.target.result;
+                fileText = text;
+                var canvas = document.getElementById("canvasElementId");
+                var context = canvas.getContext("2d");
+                context.font = "14px Georgia";
+				context.fillText(text, 10, 50);
+            }; 
+
+			if (file.name.match(/image.*/)) {
+			   imageReader.readAsDataURL(file);
+			}
+
+			if (file.type.match('text/plain')) {
+                textReader.readAsText(file);
+               	displayTxtFileInfo(file);
+               	addToDatabase(file);
+            };     
+        };
+
+        function displayTxtFileInfo(file) {
+        	var ul = document.getElementById('documentHistoryId');
+			var li = document.createElement('li');
+			var dateNow =  (new Date()).toString().split(' ').splice(1,4).join(' ');
+			var type = file.name.split('.').pop();
+			li.appendChild(document.createTextNode("File: " + file.name + ", Date: " + dateNow + ", Type: " + type));
+			ul.appendChild(li);
+        }
+
+        function addToDatabase(file) {
+
+        }
+	}())
+	</script>
+</body>
+</html>

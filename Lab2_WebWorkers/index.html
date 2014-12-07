@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Lab 2</title>
+</head>
+<body>
+	
+	<canvas width="800" height="600" id="canvasElementId">
+		Your browser does not support canvas element
+	</canvas>
+	<script>
+	(function(){
+		"use strict"
+
+		var canvas = document.getElementById('canvasElementId');
+		var context = canvas.getContext('2d');
+
+		var worker = new Worker("worker.js");
+
+		var image = new Image();
+
+  		image.onload = function() {
+    		context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    		makeSolarize(240);
+  		};
+
+  		worker.onmessage = function(event) {
+			context.putImageData(event.data, 0, 0);
+        };
+
+  		image.src = 'image.jpg';
+
+  		function makeSolarize(d) {
+	    	var idata = context.getImageData(0, 0, canvas.width, canvas.height);
+	    	  worker.postMessage({ idata: idata, d: d});
+		}
+
+		function makeNagative() {
+	    	var idata = context.getImageData(0, 0, canvas.width, canvas.height);
+
+	    	var data = idata.data;
+	    	var d = 200;
+
+	    	for (var i = 0; i <= data.length - 4; i += 4) {
+	        		
+	        		data[i] = 255 - data[i]
+	        		data[i + 1] = 255 - data[i + 1];
+	        		data[i + 2] = 255 - data[i + 2];
+	   		}
+
+	    	context.putImageData(idata, 0, 0);
+		}
+	}())
+	</script>
+</body>
+</html>
