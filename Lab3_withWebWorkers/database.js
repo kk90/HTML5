@@ -7,12 +7,12 @@ var database = (function() {
 		console.log('Error !');
 	};
 
-	function renderFile(row) {
+	function renderFiles(row) {
 
 		var filesList = document.getElementById(listId);
 		var li = document.createElement("li");
 		var a = document.createElement("a");
-		var t = document.createTextNode("File: " + row.filename + ", Date: " + row.filedate + ", Type: " + row.filetype);
+		var t = document.createTextNode("File: " + row.filename + ", Date: " + row.filedate + ", Type: " + row.filetype + "         ");
 
 		a.addEventListener("click", function(e) {
 			database.deleteFile(row.id);
@@ -41,21 +41,12 @@ var database = (function() {
 			if(!!result == false)
 		  		return;
 
-			renderFile(result.value);
+			renderFiles(result.value);
 			result.continue();
 		};
 
 		cursorRequest.onerror = onerror;			
 	}
-
-	var guid = (function() {
-		function s4() {
-			return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
-		}
-		return function() {
-			return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
-		};
-	})();
 
 	return {
 		open: function() {
@@ -72,7 +63,7 @@ var database = (function() {
 			  		dbUpgrade.deleteObjectStore("files");
 				}
 
-				var store = dbUpgrade.createObjectStore("files", { keyPath: "id" });
+				var store = dbUpgrade.createObjectStore("files", { keyPath: "id", autoIncrement: true });
 			};
 
 			request.onsuccess = function(e) {
@@ -88,13 +79,14 @@ var database = (function() {
 			var trans = db.transaction(["files"], "readwrite");
 			var store = trans.objectStore("files");
 
-			file.id = guid();
-
-			var request = store.put(file);
+			var request = store.put({
+				"filename": file.name,
+				"filedate": file.date,
+				"filetype":  file.type,
+			});
 
 			trans.oncomplete = function(e) {
-				renderFile(file); // delete doesn't work
-				// getAllFiles();
+				getAllFiles();
 			};
 
 			request.onerror = function(e) {

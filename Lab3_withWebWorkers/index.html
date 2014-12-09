@@ -38,13 +38,14 @@
 		function onStart() {
   			database.open();
   			database.addListId('filesListId');
-		};
+		}
 
 		var droppedTxtFiles = 0;
 		var droppedImageFiles = 0;
 		
 		var textFromTxtFile = "";
 		var imageOriginalState;
+
 		var filtrNegative = document.getElementById('filtrNegativeId');
 	    var filtrSolarize = document.getElementById('filtrSolorizeId');
 	    var solarizeSlider = document.getElementById('sliderId');
@@ -54,49 +55,73 @@
 		var context = canvas.getContext('2d');
 
 		window.addEventListener("DOMContentLoaded", onStart, false);
+
         canvas.addEventListener("dragenter", onDragEnter, false);
         canvas.addEventListener("dragover", onDragOver, false);
         canvas.addEventListener("drop", onDropFiles, false);
+
 	    filtrNegative.addEventListener("click", addFilters, false);
 	    filtrSolarize.addEventListener("click", addFilters, false);
 		solarizeSlider.addEventListener("change", addFilters, false);
+		var negativeAndSolarize = false;
+		// workers
+		// 
+		var workerSolarize = new Worker("solarizeWorker.js");
+		var workerNegative = new Worker("negativeWorker.js");
+
+  		workerSolarize.onmessage = function(e) {
+			context.putImageData(e.data, 0, 0);
+
+			if(negativeAndSolarize){
+				var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+				workerNegative.postMessage({ imageData: imageData });
+				negativeAndSolarize = false;
+			} else {
+				redisplayText();
+			}
+        };
+
+  		workerNegative.onmessage = function(e) {
+			context.putImageData(e.data, 0, 0);
+			redisplayText();
+        };
 
   		function makeSolarize(level) {
+    	
 		   	var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-    		var data = imageData.data;
-		    for (var i = 0; i <= data.length - 4; i += 4) {
-		        data[i] + level <= 255 ? data[i] = data[i] + level : data[i] = 255;
-		        data[i + 1] + level <= 255 ? data[i + 1] = data[i + 1] + level : data[i + 1] = 255;
-		        data[i + 2] + level <= 255 ? data[i + 2] = data[i + 2] + level : data[i + 2] = 255;
-			}
-    		context.putImageData(imageData, 0, 0);
-		};
+
+		   	workerSolarize.postMessage({ imageData: imageData, level: level});
+		}
 
 		function makeNegative() {
+
 	    	var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-	    	var data = imageData.data;
-	    	for (var i = 0; i <= data.length - 4; i += 4) {
-	        		data[i] = 255 - data[i]
-	        		data[i + 1] = 255 - data[i + 1];
-	        		data[i + 2] = 255 - data[i + 2];
-	   		}
-	    	context.putImageData(imageData, 0, 0);
-		};
+
+			workerNegative.postMessage({ imageData: imageData });
+		}
+
+		function makeNegativeAndSolarize(level) {
+			negativeAndSolarize = true;
+			var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+			workerSolarize.postMessage({ imageData: imageData, level: level});
+		}
 
 		function restoreImage() {
 	    	if (typeof imageOriginalState != "undefined") {
 			    context.putImageData(imageOriginalState, 0, 0);
 	    	}
-		};
+		}
 
 		function clearImage() {
         	context.clearRect(0, 0, canvas.width, canvas.height);
-        };
+        }
 
 		function onDropFiles(e) {
             e.stopPropagation();
             e.preventDefault();
+
             var files = e.dataTransfer.files;
+
             for (var i = 0; i < files.length; i++) {
                 processDroppedFile(files[i]);
             }
@@ -113,10 +138,14 @@
         };
 
         function processDroppedFile(file) {
+
         	var imageReader = new FileReader();
             var textReader = new FileReader();
+
             imageReader.onload = function (e) {
+
                 var image = new Image();
+
                 image.onload = function () {
                 	clearImage();
                     context.drawImage(image, 0, 0, canvas.width, canvas.height);
@@ -125,10 +154,12 @@
 	    			filtrSolarize.checked = false;
                     redisplayText();
                 };
+
                 image.src = e.target.result;
             };
  			
  			textReader.onload = function (e) {
+
                 var text = e.target.result;
                	
                 if(droppedTxtFiles == 1) {
@@ -139,9 +170,10 @@
                 	filtrNegative.checked = false;
 	    			filtrSolarize.checked = false;
                 }
+
                	displayText(text);
             }; 
-            
+
 			if (file.type.match('image/jpeg') || file.type.match('image/png') || file.type.match('image/jpg')) {
 			   droppedImageFiles += 1;
 			   imageReader.readAsDataURL(file);
@@ -159,18 +191,18 @@
         	textFromTxtFile = text;
             context.font = "14px Georgia";
 			context.fillText(text, 10, 50);
-        };
+        }
 
         function redisplayText() {
             context.font = "14px Georgia";
 			context.fillText(textFromTxtFile, 10, 50);
-        };
+        }
 
         function addFileToDatabase(name) {
 			var date =  (new Date()).toString().split(' ').splice(1,4).join(' ');
 			var type = name.split('.').pop();
-			database.addFile({ filename: name, filedate: date, filetype: type});
-        };
+			database.addFile({ name: name, date: date, type: type});
+        }
 
 	    function addFilters() {
 	    	clearImage();
@@ -178,8 +210,7 @@
 	    	if(filtrSolarize.checked && filtrNegative.checked) {
 	    		var sliderValue = getSliderValue();
 	      		displaySlider();
-	    		makeSolarize(sliderValue);
-	    		makeNegative();
+	    		makeNegativeAndSolarize(sliderValue);
 	    	}
 	    	if(!filtrSolarize.checked && filtrNegative.checked) {
 	    		hideSlider();
@@ -194,20 +225,20 @@
 	    		hideSlider();
 	    		restoreImage();
 	    	}
-	    	redisplayText();
-	    };
+	    	
+	    }
 
 	    function displaySlider() {
 	    	solarizeSliderDiv.style.display = "block";
-	    };
+	    }
 
 	    function hideSlider() {
 	    	solarizeSliderDiv.style.display = "none";
-	    };
+	    }
 
 	    function getSliderValue() {
 	    	return parseInt(solarizeSlider.value);
-	    };
+	    }
 	}())
 	</script>
 </body>
