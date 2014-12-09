@@ -24,7 +24,7 @@
 
 	  		<div class="col-md-6">
 	  			<p>Files:</p>
-	  			<ul id="documentHistoryId">
+	  			<ul id="filesListId">
 				</ul>
 	  		</div>
 		</div>
@@ -33,6 +33,154 @@
 	<script>
 	(function() {
 		"use strict"
+
+		var database = {};
+
+		database.indexedDB = {};
+
+
+		database.indexedDB = (function() {
+
+			return {
+
+				open: function() {
+					
+				},
+				addFile: function() {
+					
+				}
+			};
+		}())
+		// OPEN DATABASE
+		database.indexedDB.open = function() {
+
+			var version = 1;
+			var request = indexedDB.open("files", version);
+
+			request.onupgradeneeded = function(e) {
+				var db = e.target.result;
+
+				e.target.transaction.onerror = database.indexedDB.onerror;
+
+				if(db.objectStoreNames.contains("files")) {
+			  		db.deleteObjectStore("files");
+				}
+
+				var store = db.createObjectStore("files", { keyPath: "id", autoIncrement: true });
+			};
+
+			request.onsuccess = function(e) {
+				database.indexedDB.db = e.target.result;
+				database.indexedDB.getAllFiles();
+			};
+
+			request.onerror = database.indexedDB.onerror;
+		}
+
+		// ADD FILE
+		database.indexedDB.addFile = function(file) {
+
+			var db = database.indexedDB.db;
+
+			var trans = db.transaction(["files"], "readwrite");
+
+			var store = trans.objectStore("files");
+
+			var request = store.put({
+				"filename": file.name,
+				"filedate": file.date,
+				"filetype":  file.type,
+			});
+
+			trans.oncomplete = function(e) {
+				database.indexedDB.getAllFiles();
+			};
+
+			request.onerror = function(e) {
+				console.log(e.value);
+			};
+		};
+
+		// GET ALL
+		database.indexedDB.getAllFiles = function() {
+
+			var filesHistory = document.getElementById("filesListId");
+
+			filesHistory.innerHTML = "";
+
+			var db = database.indexedDB.db;
+
+			var trans = db.transaction(["files"], "readwrite");
+
+			var store = trans.objectStore("files");
+
+			var keyRange = IDBKeyRange.lowerBound(0);
+
+			var cursorRequest = store.openCursor(keyRange);
+
+			cursorRequest.onsuccess = function(e) {
+				var result = e.target.result;
+
+				if(!!result == false)
+			  		return;
+
+				renderFiles(result.value);
+				result.continue();
+			};
+
+			cursorRequest.onerror = database.indexedDB.onerror;
+		};
+
+		// DELETE FILE
+		database.indexedDB.deleteFile = function(id) {
+
+			var db = database.indexedDB.db;
+
+			var trans = db.transaction(["files"], "readwrite");
+
+			var store = trans.objectStore("files");
+
+			var request = store.delete(id);
+
+			trans.oncomplete = function(e) {
+				database.indexedDB.getAllFiles(); 
+			};
+
+			request.onerror = function(e) {
+				console.log(e);
+			};
+		};
+
+		// DISPLAY ALL FILES
+		function renderFiles(row) {
+
+			var filesHistory = document.getElementById("filesListId");
+
+			var li = document.createElement("li");
+
+			var a = document.createElement("a");
+
+			var t = document.createTextNode("File: " + row.filename + ", Date: " + row.filedate + ", Type: " + row.filetype);
+
+			a.addEventListener("click", function(e) {
+				database.indexedDB.deleteFile(row.id);
+			});
+
+			a.textContent = "[Delete File]";
+			a.style.cursor = "pointer";
+
+			li.appendChild(t);
+
+			li.appendChild(a);
+
+			filesHistory.appendChild(li);
+		}
+
+		function init() {
+  			database.indexedDB.open();
+		}
+
+		window.addEventListener("DOMContentLoaded", init, false);
 
 		var droppedTxtFiles = 0;
 		var droppedImageFiles = 0;
@@ -105,7 +253,6 @@
             for (var i = 0; i < files.length; i++) {
                 processDroppedFile(files[i]);
             }
-
         };
 
         function onDragEnter(e) {
@@ -158,14 +305,13 @@
 			if (file.type.match('image/jpeg') || file.type.match('image/png')) {
 			   droppedImageFiles += 1;
 			   imageReader.readAsDataURL(file);
-			   displayFileInfo(file.name);
+			   addFileToDatabase(file.name);
 			}
 
 			if (file.type.match('text/plain')) {
 				droppedTxtFiles += 1;
                 textReader.readAsText(file);
-               	displayFileInfo(file.name)
-               	addToDatabase(file);
+               	addFileToDatabase(file.name);
             };     
         };
 
@@ -180,17 +326,10 @@
 			context.fillText(textFromTxtFile, 10, 50);
         }
 
-        function displayFileInfo(fileName) {
-        	var ul = document.getElementById('documentHistoryId');
-			var li = document.createElement('li');
-			var dateNow =  (new Date()).toString().split(' ').splice(1,4).join(' ');
-			var type = fileName.split('.').pop();
-			li.appendChild(document.createTextNode("File: " + fileName + ", Date: " + dateNow + ", Type: " + type));
-			ul.appendChild(li);
-        }
-
-        function addToDatabase(file) {
-
+        function addFileToDatabase(name) {
+			var date =  (new Date()).toString().split(' ').splice(1,4).join(' ');
+			var type = name.split('.').pop();
+			database.indexedDB.addFile({ name: name, date: date, type: type});
         }
 
 	    function addFilters() {
