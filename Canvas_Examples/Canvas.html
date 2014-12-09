@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+ <head>
+ 	<meta http-equiv = "Content-type" content = "text/html; charset = utf-8">
+ 	<title >Sample HTML5 File</title>
+ </head>
+ <body>
+	<canvas width = "640" height = "480" id = "testcanvas" style = "border:black 1px solid;"></canvas>
+
+	<script type = "text/javascript" charset = "utf-8">
+ 		(function pageLoaded(){
+ 			// Get a handle to the canvas object
+ 			var canvas = document.getElementById('testcanvas');
+ 			// Get the 2d context for this canvas
+	 		var context = canvas.getContext('2d');
+	 		// FILLED RECTANGLES
+			// Draw a solid square with width and height of 100 pixels at (200,10)
+			context.fillRect (200,10,100,100);
+			// Draw a solid square with width of 90 pixels and height of 30 pixels at (50,70)
+			context.fillRect (50,70,90,30);
+ 		})()
+	</script>
+ </body>
+</html>

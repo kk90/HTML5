@@ -9,16 +9,21 @@
 <body>
 	<div style="margin-top:20px;margin-left:20px">
 		<div class="row">
-	  		<div class="col-md-6">
+	  		<div class="col-md-6" style="min-height: 400px;min-width: 610px;">
 	  				<canvas width="600" height="400" id="canvasElementId" style="border-style: solid;border-width: 5px;">
 						Your browser does not support canvas element
 					</canvas>
+					<p></p>
 					<input type="checkbox" id="filtrSolorizeId"> Solarize
 	  				<input type="checkbox" id="filtrNegativeId"> Nagative
+	  				<div id="sliderDivId" style="display:none">
+	  					<p></p>
+	  					<input id="sliderId" type="range" min="0" max="255" step="1" />
+	  				</div>
 	  		</div>
 
 	  		<div class="col-md-6">
-	  			<p>Txt files:</p>
+	  			<p>Files:</p>
 	  			<ul id="documentHistoryId">
 				</ul>
 	  		</div>
@@ -29,47 +34,78 @@
 	(function() {
 		"use strict"
 
-		var fileText = "";
+		var droppedTxtFiles = 0;
+		var droppedImageFiles = 0;
+		
+		var textFromTxtFile = "";
+		var imageOriginalState;
+
+		var filtrNegative = document.getElementById('filtrNegativeId');
+	    var filtrSolarize = document.getElementById('filtrSolorizeId');
+	    var solarizeSlider = document.getElementById('sliderId');
+	    var solarizeSliderDiv = document.getElementById('sliderDivId');
 
 		var canvas = document.getElementById('canvasElementId');
+		var context = canvas.getContext('2d');
 
         canvas.addEventListener("dragenter", onDragEnter, false);
         canvas.addEventListener("dragover", onDragOver, false);
         canvas.addEventListener("drop", onDropFiles, false);
 
-		var context = canvas.getContext('2d');
+	    filtrNegative.addEventListener("click", addFilters, false);
+	    filtrSolarize.addEventListener("click", addFilters, false);
+		solarizeSlider.addEventListener("change", addFilters, false);
 
   		function makeSolarize(level) {
-	    	var idata = context.getImageData(0, 0, canvas.width, canvas.height);
-	    	var data = idata.data;
-    	    for (var i = 0; i <= data.length - 4; i += 4) {
+    	
+		   	var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+
+    		var data = imageData.data;
+
+		    for (var i = 0; i <= data.length - 4; i += 4) {
 		        data[i] + level <= 255 ? data[i] = data[i] + level : data[i] = 255;
 		        data[i + 1] + level <= 255 ? data[i + 1] = data[i + 1] + level : data[i + 1] = 255;
 		        data[i + 2] + level <= 255 ? data[i + 2] = data[i + 2] + level : data[i + 2] = 255;
 			}
-	    	context.putImageData(idata, 0, 0);
+
+    		context.putImageData(imageData, 0, 0);
 		}
 
-		function makeNagative() {
-	    	var idata = context.getImageData(0, 0, canvas.width, canvas.height);
-	    	var data = idata.data;
+		function makeNegative() {
+
+	    	var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+
+	    	var data = imageData.data;
+
 	    	for (var i = 0; i <= data.length - 4; i += 4) {
-	        		
 	        		data[i] = 255 - data[i]
 	        		data[i + 1] = 255 - data[i + 1];
 	        		data[i + 2] = 255 - data[i + 2];
 	   		}
-	    	context.putImageData(idata, 0, 0);
+
+	    	context.putImageData(imageData, 0, 0);
 		}
+
+		function restoreImage() {
+	    	if (typeof imageOriginalState != "undefined") {
+			    context.putImageData(imageOriginalState, 0, 0);
+	    	}
+		}
+
+		function clearImage() {
+        	context.clearRect(0, 0, canvas.width, canvas.height);
+        }
 
 		function onDropFiles(e) {
             e.stopPropagation();
             e.preventDefault();
+
             var files = e.dataTransfer.files;
 
             for (var i = 0; i < files.length; i++) {
                 processDroppedFile(files[i]);
             }
+
         };
 
         function onDragEnter(e) {
@@ -88,50 +124,111 @@
             var textReader = new FileReader();
 
             imageReader.onload = function (e) {
-                var canvas = document.getElementById("canvasElementId");
-                var context = canvas.getContext("2d");
+
                 var image = new Image();
 
                 image.onload = function () {
+                	clearImage();
                     context.drawImage(image, 0, 0, canvas.width, canvas.height);
-                    var ul = document.getElements
+                    imageOriginalState = context.getImageData(0, 0, canvas.width, canvas.height);
+                    filtrNegative.checked = false;
+	    			filtrSolarize.checked = false;
+                    redisplayText();
                 };
 
                 image.src = e.target.result;
             };
  			
  			textReader.onload = function (e) {
+
                 var text = e.target.result;
-                fileText = text;
-                var canvas = document.getElementById("canvasElementId");
-                var context = canvas.getContext("2d");
-                context.font = "14px Georgia";
-				context.fillText(text, 10, 50);
+               	
+                if(droppedTxtFiles == 1) {
+                	imageOriginalState = context.getImageData(0, 0, canvas.width, canvas.height);
+                } else {
+                	clearImage();
+	    			context.putImageData(imageOriginalState, 0, 0);
+                	filtrNegative.checked = false;
+	    			filtrSolarize.checked = false;
+                }
+
+               	displayText(text);
             }; 
 
-			if (file.name.match(/image.*/)) {
+			if (file.type.match('image/jpeg') || file.type.match('image/png')) {
+			   droppedImageFiles += 1;
 			   imageReader.readAsDataURL(file);
+			   displayFileInfo(file.name);
 			}
 
 			if (file.type.match('text/plain')) {
+				droppedTxtFiles += 1;
                 textReader.readAsText(file);
-               	displayTxtFileInfo(file);
+               	displayFileInfo(file.name)
                	addToDatabase(file);
             };     
         };
 
-        function displayTxtFileInfo(file) {
+        function displayText(text) {
+        	textFromTxtFile = text;
+            context.font = "14px Georgia";
+			context.fillText(text, 10, 50);
+        }
+
+        function redisplayText() {
+            context.font = "14px Georgia";
+			context.fillText(textFromTxtFile, 10, 50);
+        }
+
+        function displayFileInfo(fileName) {
         	var ul = document.getElementById('documentHistoryId');
 			var li = document.createElement('li');
 			var dateNow =  (new Date()).toString().split(' ').splice(1,4).join(' ');
-			var type = file.name.split('.').pop();
-			li.appendChild(document.createTextNode("File: " + file.name + ", Date: " + dateNow + ", Type: " + type));
+			var type = fileName.split('.').pop();
+			li.appendChild(document.createTextNode("File: " + fileName + ", Date: " + dateNow + ", Type: " + type));
 			ul.appendChild(li);
         }
 
         function addToDatabase(file) {
 
         }
+
+	    function addFilters() {
+	    	clearImage();
+	    	restoreImage();
+	    	if(filtrSolarize.checked && filtrNegative.checked) {
+	    		var sliderValue = getSliderValue();
+	      		displaySlider();
+	    		makeNegative();
+	    		makeSolarize(sliderValue);
+	    	}
+	    	if(!filtrSolarize.checked && filtrNegative.checked) {
+	    		hideSlider();
+	    		makeNegative();
+	    	}
+	    	if(filtrSolarize.checked && !filtrNegative.checked) {
+	    		var sliderValue = getSliderValue();
+	      		displaySlider();
+	    		makeSolarize(sliderValue);
+	    	}
+	    	if(!filtrSolarize.checked && !filtrNegative.checked) {
+	    		hideSlider();
+	    		restoreImage();
+	    	}
+	    	redisplayText();
+	    }
+
+	    function displaySlider() {
+	    	solarizeSliderDiv.style.display = "block";
+	    }
+
+	    function hideSlider() {
+	    	solarizeSliderDiv.style.display = "none";
+	    }
+
+	    function getSliderValue() {
+	    	return parseInt(solarizeSlider.value);
+	    }
 	}())
 	</script>
 </body>
