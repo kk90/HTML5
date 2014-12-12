@@ -23,6 +23,12 @@
 	  		</div>
 
 	  		<div class="col-md-6">
+	  		<div id="radioButtons">
+		  		<label class="checkbox-inline"><input type="radio" name="fileTypeRadio" value="all" id="allRadio" checked>All</label>
+				<label class="checkbox-inline"><input type="radio" name="fileTypeRadio" value="txt" id="textRadio">Text</label>
+				<label class="checkbox-inline"><input type="radio" name="fileTypeRadio" value="jpg" id="imageRadio">Image</label>
+			</div>
+			<p></p>
 	  			<p>Files:</p>
 	  			<ul id="filesListId">
 				</ul>
@@ -35,9 +41,15 @@
 	(function() {
 		"use strict"
 
+		var fileTypeId = {
+			text: 1,
+			image: 2
+		};
+
 		function onStart() {
   			database.open();
   			database.addListId('filesListId');
+  			database.setFileTypeIds({ text: 1, image: 2 });
 		};
 
 		var droppedTxtFiles = 0;
@@ -145,11 +157,11 @@
 			if (file.type.match('image/jpeg') || file.type.match('image/png') || file.type.match('image/jpg')) {
 			   droppedImageFiles += 1;
 			   imageReader.readAsDataURL(file);
-			   addFileToDatabase(file.name);
+			   addFileToDatabase(file.name, fileTypeId.image);
 			} else if (file.type.match('text/plain')) {
 				droppedTxtFiles += 1;
                 textReader.readAsText(file);
-               	addFileToDatabase(file.name);
+               	addFileToDatabase(file.name, fileTypeId.text);
             } else {
             	alert("File type is not allowed!");
             }  
@@ -166,10 +178,10 @@
 			context.fillText(textFromTxtFile, 10, 50);
         };
 
-        function addFileToDatabase(name) {
+        function addFileToDatabase(name, typeId) {
 			var date =  (new Date()).toString().split(' ').splice(1,4).join(' ');
 			var type = name.split('.').pop();
-			database.addFile({ filename: name, filedate: date, filetype: type});
+			database.addFile({ filename: name, filedate: date, filetype: type, filetypeid: typeId});
         };
 
 	    function addFilters() {
@@ -204,6 +216,31 @@
 	    function getSliderValue() {
 	    	return parseInt(solarizeSlider.value);
 	    };
+
+	    function clearFileContent() {
+	    	var filesList = document.getElementById('filesListId');
+			filesList.innerHTML = "";
+	    }
+
+	    var radioAll = document.getElementById('allRadio');
+	    var radioText = document.getElementById('textRadio');
+	    var radioImage = document.getElementById('imageRadio');
+
+	    radioAll.addEventListener('click', getAllFiles, true);
+	    radioText.addEventListener('click', getTextFiles, true);
+	    radioImage.addEventListener('click', getImageFiles, true);
+
+	    function getAllFiles() {
+	    	database.renderAllFiles();
+	    }
+
+	   	function getTextFiles() {
+	    	database.renderTextFiles();
+	    }
+
+	    function getImageFiles() {
+	    	database.renderImageFiles();
+	    }
 	}())
 	</script>
 </body>

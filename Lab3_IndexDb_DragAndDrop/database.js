@@ -2,6 +2,12 @@ var database = (function() {
 
 	var db; 
 	var listId;
+	var fileTypeIds;
+
+	function clearFileContent() {
+    	var filesList = document.getElementById(listId);
+		filesList.innerHTML = "";
+    }
 
 	function onerror() {
 		console.log('Error !');
@@ -28,8 +34,7 @@ var database = (function() {
 
 	function getAllFiles() {
 
-		var filesList = document.getElementById(listId);
-		filesList.innerHTML = "";
+		clearFileContent();
 		var trans = db.transaction(["files"], "readwrite");
 		var store = trans.objectStore("files");
 		var keyRange = IDBKeyRange.lowerBound(0);
@@ -46,6 +51,18 @@ var database = (function() {
 		};
 
 		cursorRequest.onerror = onerror;			
+	}
+
+	function getTextFiles() {
+
+		clearFileContent();
+			
+	}
+
+	function getImageFiles() {
+
+		clearFileContent();
+			
 	}
 
 	var guid = (function() {
@@ -93,8 +110,7 @@ var database = (function() {
 			var request = store.put(file);
 
 			trans.oncomplete = function(e) {
-				renderFile(file); // delete doesn't work
-				// getAllFiles();
+				renderFile(file);
 			};
 
 			request.onerror = function(e) {
@@ -117,8 +133,26 @@ var database = (function() {
 			};
 		},
 
+		renderAllFiles: function() {
+			getAllFiles();
+		},
+
+		renderTextFiles: function() {
+			getTextFiles();
+			alert("TODO: get text (" + fileTypeIds.text+ ")" );
+		},
+
+		renderImageFiles: function() {
+			getImageFiles();
+			alert("TODO: get image (" + fileTypeIds.image + ")" );
+		},
+
 		addListId: function(Id) {
 			listId = Id;
+		},
+
+		setFileTypeIds: function(_fileTypeIds) {
+			fileTypeIds = _fileTypeIds;
 		}
 	};
 }());
