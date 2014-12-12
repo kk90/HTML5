@@ -42,7 +42,7 @@
 
 		var droppedTxtFiles = 0;
 		var droppedImageFiles = 0;
-		
+
 		var textFromTxtFile = "";
 		var imageOriginalState;
 		var filtrNegative = document.getElementById('filtrNegativeId');
@@ -175,24 +175,20 @@
 	    function addFilters() {
 	    	clearImage();
 	    	restoreImage();
-	    	if(filtrSolarize.checked && filtrNegative.checked) {
+	    	if(filtrSolarize.checked) {
 	    		var sliderValue = getSliderValue();
 	      		displaySlider();
 	    		makeSolarize(sliderValue);
-	    		makeNegative();
 	    	}
-	    	if(!filtrSolarize.checked && filtrNegative.checked) {
-	    		hideSlider();
+	    	if(filtrNegative.checked) {
 	    		makeNegative();
-	    	}
-	    	if(filtrSolarize.checked && !filtrNegative.checked) {
-	    		var sliderValue = getSliderValue();
-	      		displaySlider();
-	    		makeSolarize(sliderValue);
 	    	}
 	    	if(!filtrSolarize.checked && !filtrNegative.checked) {
 	    		hideSlider();
 	    		restoreImage();
+	    	}
+	    	if(!filtrSolarize.checked) {
+	    		hideSlider();
 	    	}
 	    	redisplayText();
 	    };
