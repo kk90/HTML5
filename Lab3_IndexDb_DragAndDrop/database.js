@@ -1,40 +1,13 @@
 var database = (function() {
 
 	var db; 
-	var listId;
-	var fileTypeIds;
-
-	function clearFileContent() {
-    	var filesList = document.getElementById(listId);
-		filesList.innerHTML = "";
-    }
 
 	function onerror() {
 		console.log('Error !');
 	};
 
-	function renderFile(row) {
+	function getAllFiles(onFile) {
 
-		var filesList = document.getElementById(listId);
-		var li = document.createElement("li");
-		var a = document.createElement("a");
-		var t = document.createTextNode("File: " + row.filename + ", Date: " + row.filedate + ", Type: " + row.filetype);
-
-		a.addEventListener("click", function(e) {
-			database.deleteFile(row.id);
-		});
-
-		a.textContent = "[Delete File]";
-		a.style.cursor = "pointer";
-		li.appendChild(t);
-		li.appendChild(a);
-
-		filesList.appendChild(li);
-	}
-
-	function getAllFiles() {
-
-		clearFileContent();
 		var trans = db.transaction(["files"], "readwrite");
 		var store = trans.objectStore("files");
 		var keyRange = IDBKeyRange.lowerBound(0);
@@ -46,23 +19,31 @@ var database = (function() {
 			if(!!result == false)
 		  		return;
 
-			renderFile(result.value);
+			onFile(result.value);
 			result.continue();
 		};
 
 		cursorRequest.onerror = onerror;			
 	}
 
-	function getTextFiles() {
+	function getByFileTypeId(onFile, fileTypeId) {
 
-		clearFileContent();
-			
-	}
+		var trans = db.transaction(["files"], "readwrite");
+		var store = trans.objectStore("files");
+		var index = store.index('getByFileTypeIndex');
+		var request = index.openCursor(IDBKeyRange.only([fileTypeId]));
 
-	function getImageFiles() {
+		request.onsuccess = function(e) {
+			var result = e.target.result;
 
-		clearFileContent();
-			
+			if(!!result == false)
+		  		return;
+
+			onFile(result.value);
+			result.continue();
+		};
+
+		request.onerror = onerror;	
 	}
 
 	var guid = (function() {
@@ -75,7 +56,7 @@ var database = (function() {
 	})();
 
 	return {
-		open: function() {
+		open: function(onFile) {
 
 			var version = 1;
 			var request = indexedDB.open("files", version);
@@ -90,17 +71,18 @@ var database = (function() {
 				}
 
 				var store = dbUpgrade.createObjectStore("files", { keyPath: "id" });
+				store.createIndex('getByFileTypeIndex', ['filetypeid'], { unique:false } );
 			};
 
 			request.onsuccess = function(e) {
 				db = e.target.result;
-				getAllFiles();
+				getAllFiles(onFile);
 			};
 
 			request.onerror = onerror;
 		},
 
-		addFile: function(file) {
+		addFile: function(file, callback) {
 
 			var trans = db.transaction(["files"], "readwrite");
 			var store = trans.objectStore("files");
@@ -110,49 +92,35 @@ var database = (function() {
 			var request = store.put(file);
 
 			trans.oncomplete = function(e) {
-				renderFile(file);
+				callback(file, null);
 			};
 
 			request.onerror = function(e) {
-				console.log(e.value);
+				callback(null, e.value);
 			};					
 		},
 
-		deleteFile: function (id) {
+		deleteFile: function (id, callback) {
 
 			var trans = db.transaction(["files"], "readwrite");
 			var store = trans.objectStore("files");
 			var request = store.delete(id);
 
 			trans.oncomplete = function(e) {
-				getAllFiles(); 
+				callback({status: "success"}, null); 
 			};
 
 			request.onerror = function(e) {
-				console.log(e);
+				callback(null, e.value); 
 			};
 		},
 
-		renderAllFiles: function() {
-			getAllFiles();
+		getAllFiles: function(onFile) {
+			getAllFiles(onFile);
 		},
 
-		renderTextFiles: function() {
-			getTextFiles();
-			alert("TODO: get text (" + fileTypeIds.text+ ")" );
+		getByFileTypeId: function(fileTypeId, onFile) {
+			getByFileTypeId(onFile, fileTypeId);
 		},
-
-		renderImageFiles: function() {
-			getImageFiles();
-			alert("TODO: get image (" + fileTypeIds.image + ")" );
-		},
-
-		addListId: function(Id) {
-			listId = Id;
-		},
-
-		setFileTypeIds: function(_fileTypeIds) {
-			fileTypeIds = _fileTypeIds;
-		}
 	};
 }());
