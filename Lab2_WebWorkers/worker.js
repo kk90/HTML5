@@ -14,7 +14,3 @@ this.addEventListener('message', function(e) {
     this.postMessage(idata);
     
 }, false);
-
-
-
-function

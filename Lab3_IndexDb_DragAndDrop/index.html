@@ -84,26 +84,31 @@
 	    radioText.addEventListener('click', getTextFiles, true);
 	    radioImage.addEventListener('click', getImageFiles, true);
 
-  		function makeSolarize(level) {
-		   	var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-    		var data = imageData.data;
-		    for (var i = 0; i <= data.length - 4; i += 4) {
-		        data[i] + level <= 255 ? data[i] = data[i] + level : data[i] = 255;
-		        data[i + 1] + level <= 255 ? data[i + 1] = data[i + 1] + level : data[i + 1] = 255;
-		        data[i + 2] + level <= 255 ? data[i + 2] = data[i + 2] + level : data[i + 2] = 255;
+	    var negativeFilterWorker = new Worker("negativeFilterWorker.js");
+	    var solarizeFilterWorker = new Worker("solarizeFilterWorker.js");
+
+  		negativeFilterWorker.onmessage = function(e) {
+			context.putImageData(e.data.imageData, 0, 0);
+			redisplayText();
+        };
+
+  		solarizeFilterWorker.onmessage = function(e) {
+			context.putImageData(e.data.imageData, 0, 0);
+			if(e.data.nextFilter) {
+				makeNegative();
+			}else {
+				redisplayText();
 			}
-    		context.putImageData(imageData, 0, 0);
+        };
+
+  		function makeSolarize(level, makeNegative) {
+		   	var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+	    	solarizeFilterWorker.postMessage({ imageData: imageData, level: level, nextFilter: makeNegative});
 		};
 
 		function makeNegative() {
 	    	var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-	    	var data = imageData.data;
-	    	for (var i = 0; i <= data.length - 4; i += 4) {
-	        		data[i] = 255 - data[i]
-	        		data[i + 1] = 255 - data[i + 1];
-	        		data[i + 2] = 255 - data[i + 2];
-	   		}
-	    	context.putImageData(imageData, 0, 0);
+	    	negativeFilterWorker.postMessage({ imageData: imageData });
 		};
 
 		function restoreImage() {
@@ -138,6 +143,7 @@
         function processDroppedFile(file) {
         	var imageReader = new FileReader();
             var textReader = new FileReader();
+            
             imageReader.onload = function (e) {
                 var image = new Image();
                 image.onload = function () {
@@ -203,22 +209,25 @@
 	    function addFilters() {
 	    	clearImage();
 	    	restoreImage();
-	    	if(filtrSolarize.checked) {
+	    	if(filtrSolarize.checked && filtrNegative.checked) {
 	    		var sliderValue = getSliderValue();
 	      		displaySlider();
-	    		makeSolarize(sliderValue);
+	    		makeSolarize(sliderValue, true);
 	    	}
-	    	if(filtrNegative.checked) {
+	    	if(filtrSolarize.checked && !filtrNegative.checked) {
+	    		var sliderValue = getSliderValue();
+	    		displaySlider();
+	    		makeSolarize(sliderValue, false);
+	    	}
+	    	if(!filtrSolarize.checked && filtrNegative.checked) {
+	    		hideSlider();
 	    		makeNegative();
 	    	}
 	    	if(!filtrSolarize.checked && !filtrNegative.checked) {
 	    		hideSlider();
-	    		restoreImage();
+	    		//restoreImage();
+	    		redisplayText();
 	    	}
-	    	if(!filtrSolarize.checked) {
-	    		hideSlider();
-	    	}
-	    	redisplayText();
 	    };
 
 	    function displaySlider() {
