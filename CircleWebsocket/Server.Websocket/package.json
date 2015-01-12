@@ -1,0 +1,13 @@
+{
+  "name": "Server.Websocket",
+  "version": "0.0.0",
+  "description": "Server.Websocket",
+  "main": "server.js",
+  "author": {
+    "name": "Bartlomiej",
+    "email": ""
+  },
+  "dependencies": {
+    "ws": "^0.6.5"
+  }
+}

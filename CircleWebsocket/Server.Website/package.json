@@ -1,0 +1,13 @@
+{
+  "name": "Server.Website",
+  "version": "0.0.0",
+  "description": "Server.Website",
+  "main": "server.js",
+  "author": {
+    "name": "Bartlomiej",
+    "email": ""
+  },
+  "dependencies": {
+    "express": "^4.10.7"
+  }
+}

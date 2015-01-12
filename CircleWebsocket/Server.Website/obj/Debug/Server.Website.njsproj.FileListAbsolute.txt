@@ -1,0 +1,2 @@
+C:\Users\Bartlomiej\Desktop\Websocket\Server\Server.Website\obj\Debug\Server.Website.njsprojResolveAssemblyReference.cache
+C:\Users\Bartlomiej\Desktop\Websocket\Server\Server.Website\bin\Microsoft.NodejsTools.WebRole.dll

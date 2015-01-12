@@ -1,0 +1,171 @@
+﻿<!DOCTYPE html>
+
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>Websocket</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css">
+    <style type="text/css">
+        .canvasFrame {
+            border: 1px solid black;
+        }
+
+        .urlAreaWidth {
+            width: 400px;
+        }
+        .margin {
+            margin-left: 10px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="row margin">
+        <div class="col-md-6">
+            <canvas width="400" height="400" class="canvasFrame" id="canvasId">
+                Your browser does not support canvas element
+            </canvas>
+            <p>
+                <textarea id="url" class="form-control urlAreaWidth"></textarea>
+            </p>
+            <p>
+                <button type="button" class="btn btn-default" id="clearButton">Clear</button>
+                <button type="button" class="btn btn-default" id="disconnectButton">Disconnect</button>
+                <button type="button" class="btn btn-default" id="connectButton">Connect</button>
+            </p>
+        </div>
+        <div class="col-md-6">
+
+        </div>
+    </div>
+
+<script type="text/javascript">
+    var circleRadius = 15;
+    var websocket;
+
+    var clearButton = document.getElementById("clearButton");
+    var disconnectButton = document.getElementById("disconnectButton");
+    var connectButton = document.getElementById("connectButton");
+    var url = document.getElementById("url");
+    var canvas = document.getElementById("canvasId");
+    var context = canvas.getContext("2d");
+
+    clearButton.addEventListener("click", clearCanvas, false);
+    disconnectButton.addEventListener("click", doDisconnect, false);
+    connectButton.addEventListener("click", doConnect, false);
+
+    window.addEventListener("load", init, false);
+
+    canvas.addEventListener("click", onCanvasClick, false);
+
+    function onCanvasClick(e) {
+        var mousePos = getMousePos(canvas, e);
+        drawCircle(mousePos.x, mousePos.y);
+        sendToServerCoordiantes(mousePos);
+    }
+
+    function getMousePos (canvas, e) {
+        var rect = canvas.getBoundingClientRect();
+        return {
+            x: e.clientX - rect.left,
+            y: e.clientY - rect.top
+        };
+    }
+
+    function drawCircle (x, y) {
+        context.beginPath();
+        context.arc(x, y, circleRadius, 0, 2 * Math.PI, false);
+        context.fillStyle = "green";
+        context.fill();
+        context.stroke();
+    }
+
+    function init () {
+        url.value = "ws://54.93.67.126:4000/";
+        disconnectButton.disabled = true;
+    }
+
+    function doConnect () {
+        var websocketUrl = url.value;
+
+        if (!correctWebsocketUrl(websocketUrl)) {
+            return;
+        }
+
+        websocket = new WebSocket(websocketUrl);
+
+        websocket.onopen = function (e) {
+            onOpen(e);
+        }
+            
+        websocket.onclose = function (e) {
+            onClose(e);
+        };
+
+        websocket.onmessage = function (e) {
+            onMessage(e);
+        };
+
+        websocket.onerror = function (e) {
+            onError(e);
+        };
+    }
+
+    function correctWebsocketUrl (url) {
+        if (url === "" || url == null) {
+            console.error("Websocket url can not be null or empty.");
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    function onOpen (e) {
+        console.log("connected");
+        connectButton.disabled = true;
+        disconnectButton.disabled = false;
+    }
+
+    function onClose (e) {
+        console.log("disconnected");
+        connectButton.disabled = false;
+        disconnectButton.disabled = true;
+    }
+
+    function onMessage (e) {
+        var mausePos = parseJson(e.data);
+        drawCircle(mausePos.x, mausePos.y);
+    }
+
+    function onError (e) {
+        console.error("error: " + e.data);
+        websocket.close();
+        connectButton.disabled = false;
+        disconnectButton.disabled = true;
+    }
+
+    function sendToServerCoordiantes(message) {
+        var data = toJson(message);
+        websocket.send(data);
+    }
+
+    function clearCanvas () {
+        context.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function doDisconnect () {
+        websocket.close();
+    }
+
+    function toJson (data) {
+        return JSON.stringify(data);
+    }
+
+    function parseJson (data) {
+        return JSON.parse(data);
+    }
+</script>
+</body>
+</html>
+
