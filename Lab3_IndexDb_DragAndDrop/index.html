@@ -59,6 +59,9 @@
 		var textFromTxtFile = "";
 		var imageOriginalState;
 		
+		var canvasExtra;
+		var contextExtra;
+
 		var filtrNegative = document.getElementById('filtrNegativeId');
 	    var filtrSolarize = document.getElementById('filtrSolorizeId');
 	    var solarizeSlider = document.getElementById('sliderId');
@@ -93,27 +96,39 @@
         };
 
   		solarizeFilterWorker.onmessage = function(e) {
-			context.putImageData(e.data.imageData, 0, 0);
+			
 			if(e.data.nextFilter) {
-				makeNegative();
+				contextExtra.putImageData(e.data.imageData, 0, 0);
+				makeNegative(false);
 			}else {
+				context.putImageData(e.data.imageData, 0, 0);
 				redisplayText();
 			}
         };
 
   		function makeSolarize(level, makeNegative) {
-		   	var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+		   	var imageData = contextExtra.getImageData(0, 0, canvas.width, canvas.height);
 	    	solarizeFilterWorker.postMessage({ imageData: imageData, level: level, nextFilter: makeNegative});
 		};
 
-		function makeNegative() {
-	    	var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+		function makeNegative(only) {
+	    	var imageData;
+			if(only){
+				imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+			} else {
+				imageData = contextExtra.getImageData(0, 0, canvas.width, canvas.height);
+			}
+	    	
 	    	negativeFilterWorker.postMessage({ imageData: imageData });
 		};
 
-		function restoreImage() {
+		function restoreOriginaImage() {
 	    	if (typeof imageOriginalState != "undefined") {
-			    context.putImageData(imageOriginalState, 0, 0);
+			     canvasExtra = document.createElement("CANVAS");
+	    		 canvasExtra.height = canvas.height;
+	    		 canvasExtra.width = canvas.width;
+				 contextExtra = canvasExtra.getContext('2d');
+			     contextExtra.putImageData(imageOriginalState, 0, 0);
 	    	}
 		};
 
@@ -207,8 +222,8 @@
         };
 
 	    function addFilters() {
-	    	clearImage();
-	    	restoreImage();
+	    	//clearImage();
+	    	restoreOriginaImage();
 	    	if(filtrSolarize.checked && filtrNegative.checked) {
 	    		var sliderValue = getSliderValue();
 	      		displaySlider();
@@ -221,14 +236,20 @@
 	    	}
 	    	if(!filtrSolarize.checked && filtrNegative.checked) {
 	    		hideSlider();
-	    		makeNegative();
+	    		makeNegative(true);
 	    	}
 	    	if(!filtrSolarize.checked && !filtrNegative.checked) {
 	    		hideSlider();
-	    		//restoreImage();
+	    		setOriginal();
 	    		redisplayText();
 	    	}
 	    };
+
+	    function setOriginal() {
+	    	if (typeof imageOriginalState != "undefined") {
+			     context.putImageData(imageOriginalState, 0, 0);
+	    	}
+	    }
 
 	    function displaySlider() {
 	    	solarizeSliderDiv.style.display = "block";

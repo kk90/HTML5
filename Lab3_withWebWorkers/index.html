@@ -46,6 +46,9 @@
 		var textFromTxtFile = "";
 		var imageOriginalState;
 
+		var canvasExtra;
+		var contextExtra;
+
 		var filtrNegative = document.getElementById('filtrNegativeId');
 	    var filtrSolarize = document.getElementById('filtrSolorizeId');
 	    var solarizeSlider = document.getElementById('sliderId');
@@ -88,27 +91,31 @@
 
   		function makeSolarize(level) {
     	
-		   	var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+		   	var imageData = contextExtra.getImageData(0, 0, canvas.width, canvas.height);
 
 		   	workerSolarize.postMessage({ imageData: imageData, level: level});
 		}
 
 		function makeNegative() {
 
-	    	var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+	    	var imageData = contextExtra.getImageData(0, 0, canvas.width, canvas.height);
 
 			workerNegative.postMessage({ imageData: imageData });
 		}
 
 		function makeNegativeAndSolarize(level) {
 			negativeAndSolarize = true;
-			var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+			var imageData = contextExtra.getImageData(0, 0, canvas.width, canvas.height);
 			workerSolarize.postMessage({ imageData: imageData, level: level});
 		}
 
-		function restoreImage() {
+		function restoreOriginaImage() {
 	    	if (typeof imageOriginalState != "undefined") {
-			    context.putImageData(imageOriginalState, 0, 0);
+	    		 canvasExtra = new Canvas();
+	    		 canvasExtra.height = canvas.height;
+	    		 canvasExtra.width = canvas.width;
+				 contextExtra = canvasExtra.getContext('2d');
+			     contextExtra.putImageData(imageOriginalState, 0, 0);
 	    	}
 		}
 
@@ -205,8 +212,7 @@
         }
 
 	    function addFilters() {
-	    	clearImage();
-	    	restoreImage();
+	    	restoreOriginaImage();
 	    	if(filtrSolarize.checked && filtrNegative.checked) {
 	    		var sliderValue = getSliderValue();
 	      		displaySlider();
@@ -223,9 +229,15 @@
 	    	}
 	    	if(!filtrSolarize.checked && !filtrNegative.checked) {
 	    		hideSlider();
-	    		restoreImage();
+	    		setOriginal();
 	    	}
 	    	
+	    }
+
+	    function setOriginal() {
+	    	if (typeof imageOriginalState != "undefined") {
+			     context.putImageData(imageOriginalState, 0, 0);
+	    	}
 	    }
 
 	    function displaySlider() {
