@@ -62,6 +62,8 @@
 		var canvasExtra;
 		var contextExtra;
 
+		var currentState = null;
+
 		var filtrNegative = document.getElementById('filtrNegativeId');
 	    var filtrSolarize = document.getElementById('filtrSolorizeId');
 	    var solarizeSlider = document.getElementById('sliderId');
@@ -92,6 +94,7 @@
 
   		negativeFilterWorker.onmessage = function(e) {
 			context.putImageData(e.data.imageData, 0, 0);
+			currentState = context.getImageData(0, 0, canvas.width, canvas.height);
 			redisplayText();
         };
 
@@ -99,9 +102,10 @@
 			
 			if(e.data.nextFilter) {
 				contextExtra.putImageData(e.data.imageData, 0, 0);
-				makeNegative(false);
+				makeNegative();
 			}else {
 				context.putImageData(e.data.imageData, 0, 0);
+				currentState = context.getImageData(0, 0, canvas.width, canvas.height);
 				redisplayText();
 			}
         };
@@ -111,13 +115,8 @@
 	    	solarizeFilterWorker.postMessage({ imageData: imageData, level: level, nextFilter: makeNegative});
 		};
 
-		function makeNegative(only) {
-	    	var imageData;
-			if(only){
-				imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-			} else {
-				imageData = contextExtra.getImageData(0, 0, canvas.width, canvas.height);
-			}
+		function makeNegative() {
+	    	var imageData = contextExtra.getImageData(0, 0, canvas.width, canvas.height);
 	    	
 	    	negativeFilterWorker.postMessage({ imageData: imageData });
 		};
@@ -165,6 +164,7 @@
                 	clearImage();
                     context.drawImage(image, 0, 0, canvas.width, canvas.height);
                     imageOriginalState = context.getImageData(0, 0, canvas.width, canvas.height);
+                    currentState = context.getImageData(0, 0, canvas.width, canvas.height);
                     filtrNegative.checked = false;
 	    			filtrSolarize.checked = false;
                     redisplayText();
@@ -174,14 +174,8 @@
  			
  			textReader.onload = function (e) {
                 var text = e.target.result;
-               	
-                if(droppedTxtFiles == 1) {
-                	imageOriginalState = context.getImageData(0, 0, canvas.width, canvas.height);
-                } else {
-                	clearImage();
-	    			context.putImageData(imageOriginalState, 0, 0);
-                	filtrNegative.checked = false;
-	    			filtrSolarize.checked = false;
+                if(currentState != null) {
+                	context.putImageData(currentState, 0, 0);
                 }
                	displayText(text);
             }; 
@@ -236,7 +230,7 @@
 	    	}
 	    	if(!filtrSolarize.checked && filtrNegative.checked) {
 	    		hideSlider();
-	    		makeNegative(true);
+	    		makeNegative();
 	    	}
 	    	if(!filtrSolarize.checked && !filtrNegative.checked) {
 	    		hideSlider();
@@ -248,6 +242,7 @@
 	    function setOriginal() {
 	    	if (typeof imageOriginalState != "undefined") {
 			     context.putImageData(imageOriginalState, 0, 0);
+			     currentState = context.getImageData(0, 0, canvas.width, canvas.height);
 	    	}
 	    }
 
