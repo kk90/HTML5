@@ -1,0 +1,171 @@
+<!DOCTYPE html>    
+<head>
+    <meta charset="utf-8">
+    <title>Ball</title>
+	<style>
+		html, body {
+			width: 100%;
+			height: 100%;
+			margin: 0px;
+			border: 0;
+			overflow: hidden; 
+			display: block;  
+		}
+		canvas {
+			position: absolute; 
+			left: 0px; 
+			top: 0px;
+		}
+	</style>
+</head>
+ 
+<body>
+ 
+	<canvas id='canvas'>
+	</canvas>
+	
+	<script>
+		(function() {
+
+			var canvas = document.getElementById('canvas'),
+			  	context = canvas.getContext('2d'),
+			  	canvasHeight = 0,
+			  	canvasWidth = 0,
+			  	radius = 100,
+			  	positionX = canvas.width / 2,
+			  	positionY = canvas.height / 2,
+			  	maxWidth = 0,
+			  	minWidth = 0,
+			  	maxHeight = 0,
+			  	minHeight = 0,
+			  	gamma = 0,
+    			beta = 0,
+    			secunds = 1,
+    			milisecunds = 1000,
+    			interval = 1000,
+    			precisionAngle = 2,
+    			lastDrawTime;
+
+			initialize();
+ 			
+			function initialize() {
+				window.addEventListener('resize', resizeCanvas, false);
+				resizeCanvas();
+				redraw(positionX, positionY);
+			}
+			
+			function clearFrame(width, height) {
+				context.clearRect(0, 0, width, height);
+			}
+
+			function redraw(x, y) {
+				drawCircle(x, y, radius);
+			}
+			
+			function drawCircle(x, y, r) {
+				context.beginPath();
+				context.arc(x, y, r, 0, 2 * Math.PI, false);
+				context.fillStyle = 'green';
+				context.fill();
+				context.lineWidth = 5;
+				context.strokeStyle = '#003300';
+				context.stroke();
+			}
+
+			function resizeCanvas() {
+				var height = window.innerHeight;
+				var width = window.innerWidth;
+				canvas.width = width;
+				canvas.height = height;
+				canvasHeight = height;
+				canvasWidth = width;
+				positionX = width / 2;
+			  	positionY = height / 2;
+			  	maxWidth = width - radius,
+			  	minWidth = radius,
+			  	maxHeight = height - radius,
+			  	minHeight = radius;
+			}
+			
+			window.addEventListener('deviceorientation', function(eventData) {
+    			gamma = Math.round(eventData.gamma);
+    			beta = Math.round(eventData.beta);
+  			}, false);
+				
+			requestAnimationFrame(drawLoop);
+		
+			function drawLoop(time) {
+			    
+			    if (!lastDrawTime) {
+		        	lastDrawTime = time;
+		        }
+
+				clearFrame(window.innerWidth, window.innerHeight);
+
+	    		var timeDiff = time - lastDrawTime;
+	    		
+	        	var moveX = getXSpeed() * timeDiff;
+	        	var moveY = getYSpeed() * timeDiff;
+
+	        	if(beta >= precisionAngle) {
+    				if(checkIfArea()) {
+    					positionY = positionY + moveY;
+    				}
+    			}
+    			if(beta <= -precisionAngle) {
+    				if(checkIfArea()) {
+    					positionY = positionY - moveY;
+    				}
+    			}
+    			if(gamma >= precisionAngle) {
+    				if(checkIfArea()) {
+    					positionX = positionX + moveX;
+    				}
+    			}
+    			if(gamma <= -precisionAngle) {
+    				if(checkIfArea()) {
+    					positionX = positionX - moveX;
+    				}
+    			}
+
+    			redraw(positionX, positionY);
+
+				if(positionX >= maxWidth) {
+					positionX = maxWidth - 1;
+				}
+				if(positionX <= minWidth) {
+					positionX = minWidth + 1;
+				}
+				if(positionY >= maxHeight) {
+					positionY = maxHeight - 1;
+				}
+				if(positionY <= minHeight) {
+					positionY = minHeight + 1;
+				}
+
+			    lastDrawTime = time;
+			    requestAnimationFrame(drawLoop);
+			}
+
+			function getXSpeed() {
+				return Math.abs(gamma) * (32/1000);
+			}
+
+			function getYSpeed() {
+				return Math.abs(beta) * (32/1000);
+			}
+
+			function checkIfArea() {
+				if(positionY > minHeight && positionY < maxHeight){
+					return true;
+				} else {
+					return false;
+				}
+			}
+
+		})();
+	</script>
+	
+</body>
+ 
+</html>
