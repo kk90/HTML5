@@ -26,7 +26,6 @@
 	
 	<script>
 		(function() {
-
 			var canvas = document.getElementById('canvas'),
 			  	context = canvas.getContext('2d'),
 			  	canvasHeight = 0,
@@ -43,7 +42,7 @@
     			secunds = 1,
     			milisecunds = 1000,
     			interval = 1000,
-    			precisionAngle = 2,
+    			precisionAngle = 3,
     			lastDrawTime;
 
 			initialize();
@@ -71,7 +70,6 @@
 				context.strokeStyle = '#003300';
 				context.stroke();
 			}
-
 			function resizeCanvas() {
 				var height = window.innerHeight;
 				var width = window.innerWidth;
@@ -106,43 +104,43 @@
 	    		
 	        	var moveX = getXSpeed() * timeDiff;
 	        	var moveY = getYSpeed() * timeDiff;
-
+	        	
+				// draw
 	        	if(beta >= precisionAngle) {
-    				if(checkIfArea()) {
-    					positionY = positionY + moveY;
-    				}
+	        		positionY = positionY + moveY;
     			}
+
     			if(beta <= -precisionAngle) {
-    				if(checkIfArea()) {
-    					positionY = positionY - moveY;
-    				}
+    				positionY = positionY - moveY;
     			}
+
     			if(gamma >= precisionAngle) {
-    				if(checkIfArea()) {
-    					positionX = positionX + moveX;
-    				}
+    				positionX = positionX + moveX;
     			}
+
     			if(gamma <= -precisionAngle) {
-    				if(checkIfArea()) {
-    					positionX = positionX - moveX;
-    				}
+    				positionX = positionX - moveX;
     			}
 
     			redraw(positionX, positionY);
 
+	        	// position
 				if(positionX >= maxWidth) {
 					positionX = maxWidth - 1;
 				}
+
 				if(positionX <= minWidth) {
 					positionX = minWidth + 1;
 				}
+
 				if(positionY >= maxHeight) {
-					positionY = maxHeight - 1;
-				}
-				if(positionY <= minHeight) {
-					positionY = minHeight + 1;
+					positionY = maxHeight - 2;
 				}
 
+				if(positionY <= minHeight) {
+					positionY = minHeight + 2;
+				}
+				
 			    lastDrawTime = time;
 			    requestAnimationFrame(drawLoop);
 			}
@@ -156,13 +154,12 @@
 			}
 
 			function checkIfArea() {
-				if(positionY > minHeight && positionY < maxHeight){
+				if(positionY > minHeight && positionY < maxHeight && positionX > minWidth && positionX < maxWidth) {
 					return true;
 				} else {
 					return false;
 				}
 			}
-
 		})();
 	</script>
 	
