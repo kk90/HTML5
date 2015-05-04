@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Compass</title>
+	<style>
+		.btn {
+			width: 70%;
+			height: 100px;
+			margin-top: 10px;
+		    margin-left: auto;
+		    margin-right: auto;
+			display: block;
+			font-size:30px;
+		}
+
+		.table {
+			width: 70%;
+			margin-top: 10px;
+		    margin-left: auto;
+		    margin-right: auto;
+		    text-align: center;
+		    font-size: 30px;
+		}
+
+		.image {
+    		display: block;
+    		margin-left: auto;
+    		margin-right: auto;
+    		margin-top: 90px;
+    		transform-origin: 50% 50%;
+        	-webkit-transform-origin: 50% 50%;
+        	-moz-transform-origin: 50% 50%;
+		}
+
+		.angle {
+			font-size: 30px;
+			margin-left: auto;
+    		margin-right: auto;
+    		text-align: center;
+    		width: 100%;
+		}
+	</style>
+</head>
+<body>
+	<button id="currentLocationBtn" class="btn">Get Current Location</button>
+	<button id="currentLocationBtn" class="btn">Random Location</button>
+	<div class="angle">
+		<h1>
+			Angle: <span id="angle"></span>
+		</h1>
+	</p>
+	<table class="table">
+	  <tr>
+	    <th>Location</th>
+	    <th>Latitude</th>
+	    <th>Longitudee</th>
+	  </tr>
+	  <tr>
+	    <td>Current</td>
+	    <td id="lat1">51.1923402</td>
+	    <td id="lng1">34.1923912</td>
+	  </tr>
+	  <tr>
+	    <td>Random</td>
+	    <td id="lat2">52.1967802</td>
+	    <td id="lng2">13.1923402</td>
+	  </tr>
+	</table>
+	<img id="compass" src="compass.png" alt="arrow" class="image" />
+
+	<script>
+
+		function init() {
+			var compass = document.getElementById('compass');
+			var alphaText = document.getElementById('angle');
+
+			if(window.DeviceOrientationEvent) {
+
+			  	window.addEventListener('deviceorientation', function(event) {
+			        var alpha = event.alpha;
+
+			        var angle = 360 - alpha;
+
+					alphaText.innerHTML = angle.toFixed(2); 
+
+			        compass.style.Transform = 'rotate(' + alpha + 'deg)';
+                	compass.style.WebkitTransform = 'rotate('+ angle + 'deg)';
+                	compass.style.MozTransform = 'rotate(-' + angle + 'deg)'; 
+
+			      }, false);
+			}
+		}
+
+	    init();
+	</script>
+
+</body>
+</html>
