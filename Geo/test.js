@@ -56,3 +56,13 @@ var geoMath = (function() {
         }
     }
 }());
+
+
+var distance = geoMath.distance(51.877683, 19.388259, 51.878008, 19.391112);
+var angle = geoMath.bearing(51.877683, 19.388259, 51.878008, 19.391112);
+var random = geoMath.random(51.877683, 19.388259, 100);
+var distance2 = geoMath.distance(51.877683, 19.388259, random.lat, random.lng);
+
+console.log("Distance: " + distance);
+console.log("Angle: " + angle);
+console.log("Distance2: " + distance2);

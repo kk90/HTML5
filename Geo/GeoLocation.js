@@ -15,8 +15,8 @@ var geoLocation = (function() {
 
 		navigator.geolocation.getCurrentPosition(function(position) {
 			var coordinates = { 
-				lat: parseFloat(position.coords.latitude), 
-				lng: parseFloat(position.coords.longitude)
+				lat: position.coords.latitude, 
+				lng: position.coords.longitude
 			};
 			callback(coordinates)
 		}, function(error){
@@ -29,8 +29,8 @@ var geoLocation = (function() {
 
 		navigator.geolocation.watchPosition(function(position) {
 			var coordinates = { 
-				lat: parseFloat(position.coords.latitude), 
-				lng: parseFloat(position.coords.longitude) 
+				lat: position.coords.latitude, 
+				lng: position.coords.longitude 
 			};
 			callback(coordinates);
 		}, function(error){

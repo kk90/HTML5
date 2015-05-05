@@ -209,8 +209,8 @@
 		function onGeoCompassChange(bearing) {
 			northAngle = bearing.toFixed(2);
 			bearingText.innerHTML = northAngle;
-			compassImg.style.Transform = 'rotate(' + bearing + 'deg)';
-			compassImg.style.WebkitTransform = 'rotate('+ bearing + 'deg)';
+			compassImg.style.Transform = 'rotate(-' + bearing + 'deg)';
+			compassImg.style.WebkitTransform = 'rotate(-'+ bearing + 'deg)';
 			compassImg.style.MozTransform = 'rotate(-' + bearing + 'deg)'; 
 		}
 
