@@ -7,18 +7,16 @@ var geoLocation = (function() {
 	var _options = {
 		enableHighAccuracy : true,
 		timeout    : 5000,
-		maximumAge : 0,
-		frequency: 1
-	}
+		maximumAge : 0
+	};
 
 	function _getCurrentLocation(callback, errorCallback) {
 
 		navigator.geolocation.getCurrentPosition(function(position) {
-			var coordinates = { 
+			callback({ 
 				lat: position.coords.latitude, 
 				lng: position.coords.longitude
-			};
-			callback(coordinates)
+			});
 		}, function(error){
 			errorCallback(error);
 		}, _options);
@@ -28,11 +26,10 @@ var geoLocation = (function() {
 	function _watchCurrentLocation(callback, errorCallback) {
 
 		navigator.geolocation.watchPosition(function(position) {
-			var coordinates = { 
+			callback({ 
 				lat: position.coords.latitude, 
-				lng: position.coords.longitude 
-			};
-			callback(coordinates);
+				lng: position.coords.longitude
+			});
 		}, function(error){
 			errorCallback(error);
 		}, _options);
@@ -43,11 +40,11 @@ var geoLocation = (function() {
 		init: function(options) {
 			_options = options;
 		},
-		getCurrentLocation: function(callback, errorCallback) {
+		getLocation: function(callback, errorCallback) {
 			_getCurrentLocation(callback, errorCallback);
 		},
-		watchCurrentLocation: function(callback, errorCallback) {
+		watchLocation: function(callback, errorCallback) {
 			_watchCurrentLocation(callback, errorCallback);
 		}	
-	}
+	};
 }());

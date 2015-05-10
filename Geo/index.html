@@ -3,142 +3,61 @@
 <head>
 	<meta charset="UTF-8">
 	<title>GeoLocation</title>
-	<style>
-		.btn {
-			width: 70%;
-			height: 100px;
-			margin-top: 10px;
-		    margin-left: auto;
-		    margin-right: auto;
-			display: block;
-			font-size:30px;
-		}
-
-		.table {
-			width: 70%;
-			margin-top: 10px;
-		    margin-left: auto;
-		    margin-right: auto;
-		    text-align: center;
-		    font-size: 30px;
-		}
-
-		.image {
-    		display: block;
-    		margin-left: auto;
-    		margin-right: auto;
-    		margin-top: 90px;
-    		transform-origin: 50% 50%;
-        	-webkit-transform-origin: 50% 50%;
-        	-moz-transform-origin: 50% 50%;
-		}
-
-		.center {
-			font-size: 30px;
-			margin-left: auto;
-    		margin-right: auto;
-    		text-align: center;
-    		width: 100%;
-		}
-
-	</style>
 	<script src="GeoCompass.js"></script>
 	<script src="GeoMath.js"></script>
 	<script src="GeoLocation.js"></script>
+	<style type="text/css">
+
+	.compass {
+    		display: block;
+    		margin-left: auto;
+    		margin-right: auto;
+    		margin-top: 160px;
+    		transform-origin: 50% 50%;
+        	-webkit-transform-origin: 50% 50%;
+        	-moz-transform-origin: 50% 50%;
+	}
+	.direction {
+    		display: block;
+    		margin-left: auto;
+    		margin-right: auto;
+    		margin-top: 160px;
+    		transform-origin: 50% 50%;
+        	-webkit-transform-origin: 50% 50%;
+        	-moz-transform-origin: 50% 50%;
+	}
+	</style>
 </head>
 <body>
-	<button id="currentLocationBtn" class="btn">Get Current Location</button>
-	<button id="randomLocationBtn" class="btn" disabled>Get Random Location</button>
-	<div class="center">
-		<h3>
-			N Bearing: <span id="bearingId">???</span> °
-		</h3>
-	</p>
-	<div class="center">
-		<h3>
-			Distance: <span id="distanceId">???</span> m
-		</h3>
-	</p>
-	<div class="center">
-		<h3>
-			Current Distance: <span id="currentDistanceId">???</span> m
-		</h3>
-	</p>
-	<div class="center">
-		<h3>
-			Bearing to random location: <span id="bearingNewLocationId">???</span> °, 
-		</h3>
-	</div>
-	</p>
-	<table class="table">
-	  <tr>
-	    <th>Location</th>
-	    <th>Latitude</th>
-	    <th>Longitudee</th>
-	  </tr>
-	  <tr>
-	    <td>Start</td>
-	    <td id="lat1">???</td>
-	    <td id="lng1">???</td>
-	  </tr>
-	  <tr>
-	    <td>Destination</td>
-	    <td id="lat2">???</td>
-	    <td id="lng2">???</td>
-	  </tr>
-	  <tr>
-	    <td>Current</td>
-	    <td id="lat3">???</td>
-	    <td id="lng3">???</td>
-	  </tr>
-	</table>
-	<div class="center">
-		<h3>
-			Compass:
-		</h3>
-	</div>
-	<img id="compassImg" src="compass.png" alt="arrow" class="image" />
-	<div class="center">
-		<h3>
-			New location compass:
-		</h3>
-	</div>
-	<img id="newLocationImg" src="compass.png" alt="arrow" class="image" />
+	<h3>
+		Distance: <span id="distanceId"></span> m <br/>
+		North bearing: <span id="northAngleId"></span> ° <br/>
+		Location bearing: <span id="locationAngleId"></span> ° <br/>
+	</h3>
+	
+	<h3>Compass:</h3>
+	<img id="compassId" class="compass" src="compass.png" />
+
+	<h3>Direction:</h3>
+	<img id="directionId" class="direction" src="compass.png" />
 
 	<script>
 
-		var startLatText = document.getElementById('lat1'),
-		    randomLatText = document.getElementById('lat2'),
-		    currentLatText = document.getElementById('lat3'),
-		    startLngText = document.getElementById('lng1'),
-		    randomLngText = document.getElementById('lng2'),
-		    currentLngText = document.getElementById('lng3'),
-		    currentLocationBtn = document.getElementById('currentLocationBtn'),
-		    randomLocationBtn = document.getElementById('randomLocationBtn'),
-		    compassImg = document.getElementById('compassImg'),
-		    newLocationImg = document.getElementById('newLocationImg'),
-		    bearingText = document.getElementById('bearingId'),
-		    bearingNewLocationText = document.getElementById('bearingNewLocationId'),
-		    distanceText = document.getElementById('distanceId'),
-		    currentDistanceText = document.getElementById('currentDistanceId'),
-		    distance = 0,
-		    maxDecimals = 6,
-		    northAngle = 0,
-		    newLocationAngle = 0,
-		    maxRanodmDistanceMeter = 100,
-		    currentLocation = { lat: 0.0, lng: 0.0 },
-		    startLocation = { lat: 0.0, lng: 0.0 },
-		    randomLocation = { lat: 0.0, lng: 0.0 };
+	(function(){
+		var maxRandomMeters = 150;
+		var decimal = 2;
+		var distanceText = document.getElementById('distanceId');
+		var northAngleText = document.getElementById('northAngleId');
+		var locationAngleText = document.getElementById('locationAngleId');
 
-		function countDistance() {
-			distance = geoMath.distance(
-				parseFloat(currentLocation.lat),
-				parseFloat(currentLocation.lng),
-				parseFloat(randomLocation.lat),
-				parseFloat(randomLocation.lng));
-		}
+		var compassImg = document.getElementById('compassId');
+		var directionImg = document.getElementById('directionId');
+		var northAngle = 0;
+		var locationAngle = null;
+		var initRandomLocation = true;
+		var randomPosition = {};
 
-		function onGeoError(err) {
+		function onLocationError(err) {
 			var text = "Error occurred. Error code: " + err.code + ". ";
 			switch(err.code) {
 				case 0: 
@@ -156,82 +75,56 @@
 			};
 			alert(text);
 		}
+	
+		function onLocationChange(position) {
 
-		function onCurrentLocationChange(position) {
-			currentLocation.lat = position.lat.toFixed(maxDecimals);
-			currentLocation.lng = position.lng.toFixed(maxDecimals);
-			currentLatText.innerHTML = currentLocation.lat;
-			currentLngText.innerHTML = currentLocation.lng;
+			// if run get random location
+			if(initRandomLocation){
+				randomPosition = geoMath.GetRandomLocation(position.lat, position.lng, maxRandomMeters);
+				initRandomLocation = false;
+			}
 
-			countDistance();
-
-			currentDistanceText.innerHTML = distance;
-
-			var angle = geoMath.bearing(currentLocation.lat, currentLocation.lng, randomLocation.lat, randomLocation.lng);
-			var disAngle = northAngle + angle;
-
-			onDirectionChange(parseFloat(angle));
-		}
-
-		function onCurrentLocationError(err) {
-			onGeoError(err);
-		}
-
-		function onGetCurrentLocation(position) {
-			startLocation.lat = position.lat.toFixed(maxDecimals);
-			startLocation.lng = position.lng.toFixed(maxDecimals);
-			startLatText.innerHTML = startLocation.lat;
-			startLngText.innerHTML = startLocation.lng;
-			randomLocationBtn.disabled = false;
-		}
-
-		function onGetCurrentLocationError(err) {
-			onGeoError(err);
-		}
-
-		function onCurrentLocationBtnClick(e) {
-			geoLocation.getCurrentLocation(onGetCurrentLocation, onGetCurrentLocationError);
-		}
-
-		function onRandomLocationBtnClick(e) {
-			var position = geoMath.random(startLocation.lat, startLocation.lng, maxRanodmDistanceMeter)
-			randomLocation.lat = position.lat;
-			randomLocation.lng = position.lng;
-
-			randomLngText.innerHTML = randomLocation.lng.toFixed(maxDecimals);
-			randomLatText.innerHTML = randomLocation.lat.toFixed(maxDecimals);
-
-			countDistance();
-
+			var distance = geoMath.countDistance(position.lat, position.lng, randomPosition.lat, randomPosition.lng)
 			distanceText.innerHTML = distance;
+
+			var angleBetweenCoordinates = geoMath.countBearing(position.lat, position.lng, randomPosition.lat, randomPosition.lng);
+			locationAngle = angleBetweenCoordinates;
+			var angle = parseFloat(northAngle) + parseFloat(angleBetweenCoordinates);
+			
+			if(angle >= 360){
+				angle= angle - 360;
+			}	
+
+			changeArrowDirection(angle.toFixed(decimal));	
 		}
 
 		function onGeoCompassChange(bearing) {
-			northAngle = bearing.toFixed(2);
-			bearingText.innerHTML = northAngle;
+			northAngle = bearing;
+			northAngleText.innerHTML = northAngle;
 			compassImg.style.Transform = 'rotate(-' + bearing + 'deg)';
 			compassImg.style.WebkitTransform = 'rotate(-'+ bearing + 'deg)';
 			compassImg.style.MozTransform = 'rotate(-' + bearing + 'deg)'; 
+
+			if(locationAngle != null){
+				var angle = parseFloat(bearing) + parseFloat(locationAngle);
+				changeArrowDirection(angle);
+			}
+
 		}
 
-		function onDirectionChange(angle) {
-			disAngle = angle.toFixed(2);
-			bearingNewLocationText.innerHTML = disAngle;
-			newLocationImg.style.Transform = 'rotate(' + disAngle + 'deg)';
-			newLocationImg.style.WebkitTransform = 'rotate('+ disAngle + 'deg)';
-			newLocationImg.style.MozTransform = 'rotate(-' + disAngle + 'deg)'; 
+		function changeArrowDirection(angle) {
+			locationAngleText.innerHTML = angle;
+			directionImg.style.Transform = 'rotate(' + angle + 'deg)';
+			directionImg.style.WebkitTransform = 'rotate('+ angle + 'deg)';
+			directionImg.style.MozTransform = 'rotate(-' + angle + 'deg)'; 
 		}
+
 		// on compass change
 		geoCompass.watchBearing(onGeoCompassChange);
 
-		// get current location
-		currentLocationBtn.addEventListener('click', onCurrentLocationBtnClick, false);
-
-		// get random location
-		randomLocationBtn.addEventListener('click', onRandomLocationBtnClick, false);
-
 		// watch current location 
-		geoLocation.watchCurrentLocation(onCurrentLocationChange, onCurrentLocationError);
+		geoLocation.watchLocation(onLocationChange, onLocationError);
+	}());
 
 	</script>
 
