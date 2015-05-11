@@ -6,6 +6,7 @@
 	<script src="GeoCompass.js"></script>
 	<script src="GeoMath.js"></script>
 	<script src="GeoLocation.js"></script>
+	<script src="Arrow.js"></script>
 	<style type="text/css">
 
 	.compass {
@@ -13,18 +14,12 @@
     		margin-left: auto;
     		margin-right: auto;
     		margin-top: 160px;
-    		transform-origin: 50% 50%;
-        	-webkit-transform-origin: 50% 50%;
-        	-moz-transform-origin: 50% 50%;
 	}
 	.direction {
     		display: block;
     		margin-left: auto;
     		margin-right: auto;
     		margin-top: 160px;
-    		transform-origin: 50% 50%;
-        	-webkit-transform-origin: 50% 50%;
-        	-moz-transform-origin: 50% 50%;
 	}
 	</style>
 </head>
@@ -36,10 +31,10 @@
 	</h3>
 	
 	<h3>Compass:</h3>
-	<img id="compassId" class="compass" src="compass.png" />
+	<canvas id="compassId" class="compass" width="190" height="190" ></canvas>
 
 	<h3>Direction:</h3>
-	<img id="directionId" class="direction" src="compass.png" />
+	<canvas id="directionId" class="direction" width="190" height="190" ></canvas>
 
 	<script>
 
@@ -54,7 +49,12 @@
 			northAngle = 0,
 			locationAngle = null,
 			initRandomLocation = true,
-			randomPosition = {};
+			randomPosition = {},
+			compassArrow = new arrow(),
+			directionArrow = new arrow();
+
+		compassArrow.init(compassImg, "compass.png");
+		directionArrow.init(directionImg, "compass.png");
 
 		function onLocationError(err) {
 			var text = "Error occurred. Error code: " + err.code + ". ";
@@ -91,7 +91,7 @@
 			locationAngle = angleBetweenCoordinates;
 
 			// and nort and coordinates angle
-			var angle = parseFloat(northAngle) + parseFloat(angleBetweenCoordinates);
+			var angle = modulo360(parseFloat(northAngle) + parseFloat(angleBetweenCoordinates));
 			
 			// draw arrow
 			changeArrowDirection(angle.toFixed(decimal));	
@@ -100,21 +100,17 @@
 		function onGeoCompassChange(bearing) {
 			northAngle = bearing;
 			northAngleText.innerHTML = northAngle.toFixed(decimal);
-			compassImg.style.Transform = 'rotate(-' + bearing + 'deg)';
-			compassImg.style.WebkitTransform = 'rotate(-'+ bearing + 'deg)';
-			compassImg.style.MozTransform = 'rotate(-' + bearing + 'deg)'; 
+			compassArrow.rotate(-northAngle);
 
 			if(locationAngle != null) {
-				var angle = parseFloat(bearing) + parseFloat(locationAngle);
+				var angle = modulo360(parseFloat(bearing) + parseFloat(locationAngle));
 				changeArrowDirection(angle);
 			}
 		}
 
 		function changeArrowDirection(angle) {
 			locationAngleText.innerHTML = angle.toFixed(decimal);
-			directionImg.style.Transform = 'rotate(' + angle + 'deg)';
-			directionImg.style.WebkitTransform = 'rotate('+ angle + 'deg)';
-			directionImg.style.MozTransform = 'rotate(-' + angle + 'deg)'; 
+			directionArrow.rotate(-angle);
 		}
 
 		function modulo360(angle) {
